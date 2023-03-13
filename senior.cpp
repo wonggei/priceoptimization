@@ -12,6 +12,13 @@
 
 using namespace std;
 
+#define CONVERT_SAME_FROM_ITEM true
+#ifdef CONVERT_SAME_FROM_ITEM
+map <string,string> same_price_convert;
+
+
+#endif //CONVERT_SAME_FROM_ITEM
+
 struct food_record
 {
 	string id;
@@ -80,8 +87,16 @@ ostream &operator << (ostream &os, const struct food_record &r)
 	return os;
 }
 
-vector <string> sorted_menu;
+#ifdef CONVERT_SAME_FROM_ITEM
 
+void init_same_price_convert(const vector <string> &sm)
+{
+	same_price_convert["2"] = string("1");
+	same_price_convert["4"] = string("1");
+}
+#endif //CONVERT_SAME_FROM_ITEM
+
+vector <string> sorted_menu;
 void init_menu()
 {
 	ifstream ifs("menu.csv");
@@ -119,6 +134,9 @@ void init_menu()
 		sorted_menu.push_back(r.id);
 	}
 	
+#ifdef CONVERT_SAME_FROM_ITEM
+	init_same_price_convert(sorted_menu);
+#endif //CONVERT_SAME_FROM_ITEM
 	
 	sort(sorted_menu.begin(),sorted_menu.end(),[](const string &lid,const string &rid)
 	{
@@ -163,10 +181,23 @@ void break_set_in_order()
 {
 	for( auto o : orders )
 	{
-		copy( m_fr[o].component.begin() , m_fr[o].component.end() , back_inserter(order_items));
+		vector <string> cpt;
+		copy( m_fr[o].component.begin() , m_fr[o].component.end() , back_inserter(cpt));
+		
+		if (CONVERT_SAME_FROM_ITEM)
+		{
+			transform( 	cpt.begin(), cpt.end() , cpt.begin() , [](const string &s)
+																{ 
+																	if (same_price_convert.count(s) > 0) 
+																		return same_price_convert[s]; 
+																	else 
+																		return s;
+																});
+		}
+		
+		copy( cpt.begin() , cpt.end() , back_inserter(order_items));
 	}
 }
-
 
 
 
